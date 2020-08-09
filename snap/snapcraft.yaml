@@ -1,4 +1,4 @@
-name: remmina
+name: remmina-test-giovanni
 version: git
 adopt-info: remmina
 grade: stable
@@ -91,6 +91,10 @@ parts:
       - libusb-1.0-0
       - libzvbi0
     configflags:
+      # Workaround for ubuntu 18.04 armhf: build fails with "unable to find a register to spill"
+      # remember to remove when snapcraft will be built in ubuntu >= 20.04
+      # This must be at the beginning
+      - -DCMAKE_C_FLAGS_RELEASE=-O1 -g -DNDEBUG
       - -DCMAKE_BUILD_TYPE=Release
       - -DWITH_WAYLAND=on
       - -DWITH_CLIENT=off
@@ -99,13 +103,16 @@ parts:
       - -DWITH_GSTREAMER=off
       - -DWITH_FFMPEG=on
       - -DWITH_CHANNELS=on
-      - -DSTATIC_CHANNELS=off
+      - -DBUILTIN_CHANNELS=on
       - -DWITH_CUPS=on
       - -DWITH_PCSC=on
       - -DWITH_JPEG=on
+      - -DWITH_LIBSYSTEMD=off
+      # - -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
 
       # XXX: This is an hack to have a kind of bind-mount with absolute prefix.
       - -DCMAKE_INSTALL_PREFIX=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr
+
     organize:
       snap/remmina/current: .
 
@@ -164,6 +171,7 @@ parts:
       # XXX: This is an hack to have a kind of bind-mount with absolute prefix.
       - -DCMAKE_INSTALL_PREFIX=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr
 
+
     organize:
       snap/remmina/current: .
     stage:
@@ -174,6 +182,7 @@ parts:
       snapcraftctl build
       mkdir -pv $SNAPCRAFT_PART_INSTALL/meta/gui/
       cp $SNAPCRAFT_PART_INSTALL/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/icons/hicolor/scalable/apps/org.remmina.Remmina.svg $SNAPCRAFT_PART_INSTALL/meta/gui/icon.svg
+      cp -r $SNAPCRAFT_PART_INSTALL/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/metainfo $SNAPCRAFT_PART_INSTALL/usr/share/
       cp -r $SNAPCRAFT_PART_INSTALL/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/icons $SNAPCRAFT_PART_INSTALL/meta/gui/
       for i in `find $SNAPCRAFT_PART_INSTALL/meta/gui/icons -name "*.svg" -o -name "*.png"`
       do
@@ -184,7 +193,7 @@ parts:
       set -eu
       snapcraftctl prime
       # Fix application icon lookup
-      sed --in-place 's|^Icon=.*|Icon=snap.remmina.org.remmina.Remmina|' usr/share/applications/org.remmina.Remmina.desktop
+      sed --in-place 's|^Icon=.*|Icon=snap.remmina.org.remmina.Remmina|' $SNAPCRAFT_PART_INSTALL/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/applications/org.remmina.Remmina.desktop
 
   app:
     plugin: nil
@@ -259,6 +268,7 @@ parts:
       - usr/lib/*/libopus.so.*
       - usr/lib/*/libswresample.so.*
       - usr/lib/*/libpulse-mainloop-glib.so.*
+      - usr/lib/*/libcrystalhd.so.*
       - usr/lib/*/libcacard.so.*
       - usr/lib/*/libva.so.*
       - usr/lib/*/libxvidcore.so.*
